@@ -27,5 +27,3 @@ export const removeBuildSource = async (deploymentId: string) => {
         await fs.promises.rm(sourceDir, { recursive: true, force: true });
     }
 }
-
-prepareBuildSource({ deploymentId: 'test-deployment-01', repoUrl: 'https://github.com/rishabhchaudhary0210/Grocery-Website.git' })

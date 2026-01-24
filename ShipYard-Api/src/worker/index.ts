@@ -6,6 +6,16 @@ import { prepareBuildSource, removeBuildSource } from "../services/source-manage
 import { buildRunner } from "../services/build/index.js";
 import { deployContainer } from "../services/deployment/index.js";
 
+const handleDeploymentLog = async (deploymentId: string, message: string) => {
+    await dbClient.log.create({
+        data: {
+            deploymentId: deploymentId,
+            message,
+            type: LOG_TYPE.BUILD
+        }
+    });
+}
+
 const deploymentWorker = new Worker(
     QUEUE_NAME.DEPLOYMENT,
     async (job: Job) => {
@@ -24,7 +34,7 @@ const deploymentWorker = new Worker(
                 include: {
                     project: {
                         include: {
-                            envVars: true                            
+                            envVars: true
                         }
                     },
                 }
@@ -45,13 +55,7 @@ const deploymentWorker = new Worker(
                 imageName: deployment.project?.id!,
                 imageTag: `${deployment.id}-${job.attemptsMade + 1}`,
                 onLog: async (message: string) => {
-                    await dbClient.log.create({
-                        data: {
-                            deploymentId: deployment.id,
-                            message,
-                            type: LOG_TYPE.BUILD
-                        }
-                    });
+                    await handleDeploymentLog(deployment.id, message);
                 }
             })
 
@@ -73,13 +77,16 @@ const deploymentWorker = new Worker(
                 return acc;
             }, {}));
 
+            await handleDeploymentLog(deployment.id, "Container deployed successfully");
+
             await dbClient.deployment.update({
                 where: { id: jobData.deploymentId },
-                data: { 
-                    status: DEPLOYMENT_STATUS.DEPLOYED, 
+                data: {
+                    status: DEPLOYMENT_STATUS.DEPLOYED,
                     containerId: deploymentResponse.containerId,
                     port: availablePort,
-                    finishedAt: new Date() }
+                    finishedAt: new Date()
+                }
             });
 
             await dbClient.portAllocation.create({
@@ -91,7 +98,7 @@ const deploymentWorker = new Worker(
                 }
             })
         }
-        
+
         catch (error) {
             if (job.attemptsMade + 1 >= job?.opts?.attempts!) {
                 await dbClient.deployment.update({

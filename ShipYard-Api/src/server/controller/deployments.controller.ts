@@ -94,13 +94,15 @@ export const performDeploymentAction = async (req: Request, res: Response) => {
 
     const deploymentDetails = await dbClient.deployment.findUnique({
         where: {
-            id: deploymentId
+            id: deploymentId,
+            containerId: { not: null },
+            deletedAt: null
         }
     });
 
     if (!deploymentDetails) {
         logger.warn('Deployment not found for action', { deploymentId, action });
-        return res.status(404).json({ error: true, message: 'Deployment not found' });
+        return res.status(404).json({ error: true, message: 'Deployment not found or active' });
     }
 
     try {

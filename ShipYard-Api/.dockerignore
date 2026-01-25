@@ -13,3 +13,9 @@ tmp
 # Log files
 logs
 *.log
+
+.git
+.gitignore
+
+Dockerfile
+.dockerignore

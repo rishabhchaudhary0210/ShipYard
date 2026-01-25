@@ -3,7 +3,9 @@ import dbClient from '../../db/client.js';
 import logger from '../../lib/logger.js';
 import { DEPLOYMENT_STATUS } from '../../constants/index.js';
 import deployQueue from '../../lib/queue.js';
-import { removeContainer } from '../../services/deployment/index.js';
+import { removeContainer, removeImage } from '../../services/deployment/index.js';
+import { getAppConfig } from '../../config/index.js';
+import { getImageTag } from '../../services/source-manager/index.js';
 
 export const getAllProjects = async (_req: Request, res: Response) => {
     const projects = await dbClient.project.findMany({
@@ -150,7 +152,7 @@ export const updateProject = async (req: Request, res: Response) => {
                 containerId: null,
             }
         })
-        await Promise.all(removeContainerPromises);
+        await Promise.allSettled(removeContainerPromises);
 
         const updatedProject = await dbClient.project.update({
             where: {
@@ -232,10 +234,25 @@ export const deleteProject = async (req: Request, res: Response) => {
     });
 
     const removeContainerPromises: Promise<unknown>[] = [];
+    const removeImagePromises: Promise<unknown>[] = [];
 
     projectDetails.deployments.forEach(deployment => {
         if (deployment.containerId) {
-            removeContainerPromises.push(removeContainer(deployment.containerId));
+            removeContainerPromises.push(removeContainer(deployment.containerId).catch(err => {
+                logger.warn('Failed to remove Docker container', {
+                    containerId: deployment.containerId,
+                    error: err.message,
+                });
+            }));
+
+            for (let retry = 1; retry <= (getAppConfig('deploymentQueueMaxRetries') as number); retry++) {
+                removeImagePromises.push(removeImage(getImageTag(projectId, deployment.id, retry)).catch(err => {
+                    logger.warn('Failed to remove Docker image', {
+                        image: getImageTag(projectId, deployment.id, retry),
+                        error: err.message,
+                    });
+                }));
+            }
         }
     });
 
@@ -250,7 +267,8 @@ export const deleteProject = async (req: Request, res: Response) => {
         }
     });
 
-    await Promise.all(removeContainerPromises);
+    await Promise.allSettled(removeContainerPromises);
+    await Promise.allSettled(removeImagePromises);
 
     res.json({ error: false, message: 'Project deleted successfully' });
 };

@@ -1,0 +1,38 @@
+services:
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+
+  shipyard-api:
+    image: rishabhchaudhary0210/shipyard-api:latest
+    command: npm run start:api
+    ports:
+      - "8000:8000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379
+      DOCKER_SOCKET_PATH: /var/run/docker.sock
+      PORT: 8000
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - redis
+
+  shipyard-worker:
+    image: rishabhchaudhary0210/shipyard-api:latest
+    command: npm run start:worker
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL}
+      REDIS_URL: redis://redis:6379
+      DOCKER_SOCKET_PATH: /var/run/docker.sock
+    volumes:
+      - ./data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - redis
+    
+  

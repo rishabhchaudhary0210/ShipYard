@@ -43,3 +43,7 @@ export const removeBuildSource = async (deploymentId: string) => {
         logger.debug('Build source removed', { deploymentId });
     }
 }
+
+export const getImageTag = (projectId: string, deploymentId: string, retry: number) => {
+    return `${projectId}:${deploymentId}-${retry}`;
+}

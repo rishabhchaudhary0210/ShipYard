@@ -3,7 +3,7 @@ import redisClient from "../lib/redis.js"
 import dbClient from "../db/client.js";
 import logger from "../lib/logger.js";
 import { DEPLOYMENT_STATUS, LOG_TYPE, QUEUE_NAME } from "../constants/index.js";
-import { prepareBuildSource, removeBuildSource } from "../services/source-manager/index.js";
+import { getImageTag, prepareBuildSource, removeBuildSource } from "../services/source-manager/index.js";
 import { buildRunner } from "../services/build/index.js";
 import { deployContainer, removeContainer, removeImage } from "../services/deployment/index.js";
 import { allocatePort, findAvailablePort } from "../services/port-allocation/index.js";
@@ -69,7 +69,7 @@ const deploymentWorker = new Worker(
                 rootDir: deployment.project?.rootDir ?? '',
             })
 
-            imageTag = `${deployment.project?.id}:${deployment.id}-${job.attemptsMade + 1}`;
+            imageTag = getImageTag(deployment.projectId, deployment.id, job.attemptsMade+1);
 
             logger.info('Starting build process', { deploymentId: deployment.id, imageTag });
 

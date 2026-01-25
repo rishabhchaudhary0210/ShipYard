@@ -13,7 +13,7 @@ datasource db {
 }
 
 model Project {
-  id        String    @id @default(cuid())
+  id        String    @id @default(uuid())
   name      String
   repoUrl   String
   rootDir   String?
@@ -27,7 +27,7 @@ model Project {
 }
 
 model Deployment {
-  id          String    @id @default(cuid())
+  id          String    @id @default(uuid())
   projectId   String
   status      String
   imageName   String?
@@ -35,13 +35,14 @@ model Deployment {
   port        Int?
   createdAt   DateTime  @default(now())
   finishedAt  DateTime?
+  deletedAt    DateTime?
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   logs    Log[]
 }
 
 model Log {
-  id           String   @id @default(cuid())
+  id           String   @id @default(uuid())
   deploymentId String
   type         String
   message      String
@@ -51,7 +52,7 @@ model Log {
 }
 
 model EnvVar {
-  id        String @id @default(cuid())
+  id        String @id @default(uuid())
   projectId String
   key       String
   value     String
@@ -62,7 +63,7 @@ model EnvVar {
 }
 
 model PortAllocation {
-  id          String  @id @default(cuid())
+  id          String  @id @default(uuid())
   port        Int     @unique
   inUse       Boolean @default(false)
   containerId String?

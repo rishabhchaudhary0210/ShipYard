@@ -19,3 +19,9 @@ export enum BUILD_TYPE {
     DOCKER_FILE = 'DOCKER_FILE',
     BUILD_PACK = 'BUILD_PACK'
 }
+
+export enum DEPLOYMENT_CONTAINER_ACTION {
+    START = 'START',
+    STOP = 'STOP',
+    RESTART = 'RESTART'
+}

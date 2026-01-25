@@ -11,3 +11,7 @@ dist
 shipyard.db
 
 tmp
+
+# Log files
+logs
+*.log

@@ -19,15 +19,20 @@
     "dotenv": "^17.2.3",
     "execa": "^9.6.1",
     "express": "^5.2.1",
+    "morgan": "^1.10.1",
     "prisma": "^7.2.0",
     "simple-git": "^3.30.0",
-    "ws": "^8.19.0"
+    "winston": "^3.19.0",
+    "ws": "^8.19.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/dockerode": "^4.0.1",
     "@types/express": "^5.0.6",
     "@types/ioredis": "^4.28.10",
+    "@types/morgan": "^1.9.10",
     "@types/node": "^25.0.9",
+    "@types/winston": "^2.4.4",
     "@types/ws": "^8.18.1",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",

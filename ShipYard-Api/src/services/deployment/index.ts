@@ -1,8 +1,13 @@
+import { DEPLOYMENT_CONTAINER_ACTION } from "../../constants/index.js";
 import { dockerClient } from "../../lib/docker.js";
+import logger from "../../lib/logger.js";
+import { removePortAllocation } from "../port-allocation/index.js";
 
 const INTERNAL_PORT = 3001;
 
 export const deployContainer = async (imageName: string, hostPort: number, env?: Record<string, string>) => {
+    logger.info('Creating container', { imageName, hostPort });
+
     const container = await dockerClient.createContainer({
         Image: imageName,
         HostConfig: {
@@ -18,7 +23,7 @@ export const deployContainer = async (imageName: string, hostPort: number, env?:
         ExposedPorts: {
             [`${INTERNAL_PORT}/tcp`]: {}
         },
-        Env: [...Object.entries({ ...(env || {}), PORT: INTERNAL_PORT }).map(([key, value]) => `${key}=${value}`)]
+        Env: [...Object.entries({ PORT: INTERNAL_PORT, ...(env || {}) }).map(([key, value]) => `${key}=${value}`)]
     })
 
     await container.start();
@@ -26,8 +31,11 @@ export const deployContainer = async (imageName: string, hostPort: number, env?:
     const containerId = container.id;
 
     if (!containerId) {
+        logger.error('Failed to get container ID after creation', { imageName });
         throw new Error("Error deploying container");
     }
+
+    logger.info('Container deployed successfully', { containerId, imageName, hostPort });
 
     return { containerId, hostPort, internalPort: INTERNAL_PORT };
 }
@@ -42,28 +50,41 @@ export const getContainer = async (containerId: string) => {
     return container;
 }
 
-export const performContainerAction = async (containerId: string, action: 'ON' | 'OFF') => {
+export const performContainerAction = async (containerId: string, action: DEPLOYMENT_CONTAINER_ACTION) => {
     const container = await getContainer(containerId);
 
-    if (action === 'OFF') {
-        await container.stop();
+    logger.info('Performing container action', { containerId, action });
+
+    switch (action) {
+        case DEPLOYMENT_CONTAINER_ACTION.START:
+            await container.start();
+            break;
+        case DEPLOYMENT_CONTAINER_ACTION.STOP:
+            await container.stop();
+            break;
+        case DEPLOYMENT_CONTAINER_ACTION.RESTART:
+            await container.restart();
+            break;
+        default:
+            logger.error('Unsupported container action', { containerId, action });
+            throw new Error("Unsupported container action");
     }
 
-    else if (action === 'ON') {
-        await container.start();
-    }
-
-    else {
-        throw new Error("Unsupported container action");
-    }
+    logger.info('Container action completed', { containerId, action });
 
     return true;
 }
 
 export const removeContainer = async (containerId: string) => {
+    logger.info('Removing container', { containerId });
+
     const container = await getContainer(containerId);
 
     await container.remove({ force: true });
+
+    await removePortAllocation(containerId);
+
+    logger.info('Container removed successfully', { containerId });
     
     return true;
 }
@@ -137,4 +158,12 @@ export const getContainerShell = async (containerId: string) => {
     const stream = await exec.start({ hijack: true, Tty: true });
 
     return { container, exec, stream };
+}
+
+export const removeImage = async (imageName: string) => {
+    logger.info('Removing Docker image', { imageName });
+    const image = dockerClient.getImage(imageName);
+    await image.remove({ force: true });
+    logger.info('Docker image removed', { imageName });
+    return true;
 }

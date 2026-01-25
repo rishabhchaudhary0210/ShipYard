@@ -1,22 +1,28 @@
 import { execa } from "execa";
+import logger from "../../lib/logger.js";
 import { BUILD_TYPE } from "../../constants/index.js";
 
-export const buildExecutor = async ({ buildType, sourceDir, imageName, imageTag, onLog }: { buildType: BUILD_TYPE, sourceDir: string, imageName: string, imageTag: string, onLog: (message: string) => Promise<void> }) => {
+export const buildExecutor = async ({ buildType, sourceDir, imageTag, onLog }: { buildType: BUILD_TYPE, sourceDir: string, imageTag: string, onLog: (message: string) => Promise<void> }) => {
+    logger.info('Starting build execution', { buildType, imageTag });
+
     switch (buildType) {
         case BUILD_TYPE.DOCKER_FILE:
-            return await executeDockerBuild(sourceDir, imageName, imageTag, onLog);
+            return await executeDockerBuild(sourceDir, imageTag, onLog);
         case BUILD_TYPE.BUILD_PACK:
-            return await executePackBuild(sourceDir, imageName, imageTag, onLog);
+            return await executePackBuild(sourceDir, imageTag, onLog);
         default:
+            logger.error('Unsupported build type', { buildType });
             throw new Error(`Unsupported build type: ${buildType}`);
     }
 }
 
-const executeDockerBuild = async (sourceDir: string, imageName: string, imageTag: string, onLog: (message: string) => Promise<void>) => {
+const executeDockerBuild = async (sourceDir: string, imageTag: string, onLog: (message: string) => Promise<void>) => {
+    logger.info('Executing Docker build', { imageTag, sourceDir });
+
     const dockerBuildProcess = execa('docker', [
         'build',
         '-t',
-        `${imageName}:${imageTag}`,
+        `${imageTag}`,
         sourceDir
     ], {
         all: true
@@ -26,13 +32,24 @@ const executeDockerBuild = async (sourceDir: string, imageName: string, imageTag
         onLog(data.toString());
     });
 
-    await dockerBuildProcess;
+    try {
+        await dockerBuildProcess;
+        logger.info('Docker build completed successfully', { imageTag });
+    } catch (error) {
+        logger.error('Docker build failed', { 
+            imageTag, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+        });
+        throw error;
+    }
 }
 
-const executePackBuild = async (sourceDir: string, imageName: string, imageTag: string, onLog: (message: string) => Promise<void>) => {
+const executePackBuild = async (sourceDir: string, imageTag: string, onLog: (message: string) => Promise<void>) => {
+    logger.info('Executing Pack build', { imageTag, sourceDir });
+
     const packBuildProcess = execa('pack', [
         'build',
-        `${imageName}:${imageTag}`,
+        `${imageTag}`,
         '--builder',
         'paketobuildpacks/builder-jammy-base',
         '--path',
@@ -45,5 +62,14 @@ const executePackBuild = async (sourceDir: string, imageName: string, imageTag: 
         onLog(data.toString());
     });
 
-    await packBuildProcess;
+    try {
+        await packBuildProcess;
+        logger.info('Pack build completed successfully', { imageTag });
+    } catch (error) {
+        logger.error('Pack build failed', { 
+            imageTag, 
+            error: error instanceof Error ? error.message : 'Unknown error' 
+        });
+        throw error;
+    }
 }

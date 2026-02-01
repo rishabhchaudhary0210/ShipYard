@@ -1,3 +1,5 @@
+import 'dotenv/config';
+
 interface AppConfig {
     databaseUrl: string;
     redisUrl: string;
@@ -5,6 +7,8 @@ interface AppConfig {
     dockerSocketPath: string;
     deploymentQueueRetryDelayMs?: number;
     deploymentQueueMaxRetries?: number;
+    shipyardWorkspaceRoot: string;
+    shipyardWorkspaceHostRoot: string;
 }
 
 const APP_CONFIG: AppConfig = {
@@ -18,6 +22,8 @@ const APP_CONFIG: AppConfig = {
     deploymentQueueMaxRetries: process.env.DEPLOYMENT_QUEUE_MAX_RETRIES
         ? parseInt(process.env.DEPLOYMENT_QUEUE_MAX_RETRIES)
         : 3,
+    shipyardWorkspaceRoot: process.env.SHIPYARD_WORKSPACE_ROOT || '/shipyard-workspace',
+    shipyardWorkspaceHostRoot: process.env.SHIPYARD_WORKSPACE_HOST_ROOT || '',
 }
 
 export const getAppConfig = (key: keyof typeof APP_CONFIG): AppConfig[keyof AppConfig] => {

@@ -15,9 +15,12 @@ services:
       REDIS_URL: redis://redis:6379
       DOCKER_SOCKET_PATH: /var/run/docker.sock
       PORT: 8000
+      SHIPYARD_WORKSPACE_ROOT: /shipyard-workspace
+      SHIPYARD_WORKSPACE_HOST_ROOT: ${SHIPYARD_WORKSPACE_HOST_ROOT}
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./shipyard-workspace:/shipyard-workspace
     depends_on:
       - redis
 
@@ -29,9 +32,12 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis:6379
       DOCKER_SOCKET_PATH: /var/run/docker.sock
+      SHIPYARD_WORKSPACE_ROOT: /shipyard-workspace
+      SHIPYARD_WORKSPACE_HOST_ROOT: ${SHIPYARD_WORKSPACE_HOST_ROOT}
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./shipyard-workspace:/shipyard-workspace
     depends_on:
       - redis
     

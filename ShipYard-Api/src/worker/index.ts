@@ -52,6 +52,11 @@ const deploymentWorker = new Worker(
                 }
             });
 
+            const deploymentEnvVariables = deployment?.project?.envVars?.reduce((acc: Record<string, string>, curr) => {
+                acc[curr.key] = curr.value;
+                return acc;
+            }, {}) ?? {};
+
             if (!deployment) {
                 logger.error('Deployment not found in database', { deploymentId: jobData.deploymentId });
                 throw new Error(`Deployment with ID ${jobData.deploymentId} not found`);
@@ -73,12 +78,13 @@ const deploymentWorker = new Worker(
 
             logger.info('Starting build process', { deploymentId: deployment.id, imageTag });
 
-            await buildRunner({
+            const { runTimeType } = await buildRunner({
                 sourceDir: destinationDir,
                 imageTag: imageTag,
                 onLog: async (message: string) => {
                     await handleDeploymentLog(deployment.id, message);
-                }
+                },
+                envVariables: deploymentEnvVariables
             })
 
             logger.info('Build completed successfully', { deploymentId: deployment.id, imageTag });
@@ -91,10 +97,7 @@ const deploymentWorker = new Worker(
                 port: availablePort 
             });
 
-            const deploymentResponse = await deployContainer(imageTag, availablePort, deployment.project?.envVars?.reduce((acc: Record<string, string>, curr) => {
-                acc[curr.key] = curr.value;
-                return acc;
-            }, {}));
+            const deploymentResponse = await deployContainer(imageTag, runTimeType, availablePort, deploymentEnvVariables);
 
             containerId = deploymentResponse.containerId;
 

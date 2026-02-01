@@ -2,13 +2,14 @@ import { simpleGit } from "simple-git";
 import path from "path";
 import fs from "fs";
 import logger from "../../lib/logger.js";
+import { getAppConfig } from "../../config/index.js";
 
 export const prepareBuildSource = async ({ deploymentId, repoUrl, rootDir }: { deploymentId: string, repoUrl: string, rootDir?: string }) => {
     logger.info('Preparing build source', { deploymentId, repoUrl, rootDir });
 
     const git = simpleGit();
 
-    const destinationDir = path.join(process.cwd(), 'tmp', 'deployment-src', deploymentId);
+    const destinationDir = path.join(getAppConfig('shipyardWorkspaceRoot') as string, 'deployment-src', deploymentId);
 
     if (fs.existsSync(destinationDir)) {
         logger.debug('Removing existing source directory', { destinationDir });
@@ -35,7 +36,7 @@ export const prepareBuildSource = async ({ deploymentId, repoUrl, rootDir }: { d
 }
 
 export const removeBuildSource = async (deploymentId: string) => {
-    const sourceDir = path.join(process.cwd(), 'tmp', 'deployment-src', deploymentId);
+    const sourceDir = path.join(getAppConfig('shipyardWorkspaceRoot') as string, 'deployment-src', deploymentId);
 
     if (fs.existsSync(sourceDir)) {
         logger.debug('Removing build source directory', { deploymentId, sourceDir });

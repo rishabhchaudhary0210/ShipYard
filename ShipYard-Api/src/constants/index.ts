@@ -20,6 +20,11 @@ export enum BUILD_TYPE {
     BUILD_PACK = 'BUILD_PACK'
 }
 
+export enum RUN_TIME_TYPE {
+    STATIC = 'STATIC',
+    SERVER = 'SERVER'
+}
+
 export enum DEPLOYMENT_CONTAINER_ACTION {
     START = 'START',
     STOP = 'STOP',

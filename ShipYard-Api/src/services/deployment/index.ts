@@ -1,18 +1,22 @@
-import { DEPLOYMENT_CONTAINER_ACTION } from "../../constants/index.js";
+import { DEPLOYMENT_CONTAINER_ACTION, RUN_TIME_TYPE } from "../../constants/index.js";
+import { cleanDockerLogBuffer } from "../../helpers/index.js";
 import { dockerClient } from "../../lib/docker.js";
 import logger from "../../lib/logger.js";
 import { removePortAllocation } from "../port-allocation/index.js";
 
-const INTERNAL_PORT = 3001;
+const INTERNAL_PORT = {
+    [RUN_TIME_TYPE.STATIC]: 80,
+    [RUN_TIME_TYPE.SERVER]: 3000
+};
 
-export const deployContainer = async (imageName: string, hostPort: number, env?: Record<string, string>) => {
+export const deployContainer = async (imageName: string, runTimeType: RUN_TIME_TYPE, hostPort: number, env?: Record<string, string>) => {
     logger.info('Creating container', { imageName, hostPort });
 
     const container = await dockerClient.createContainer({
         Image: imageName,
         HostConfig: {
             PortBindings: {
-                [`${INTERNAL_PORT}/tcp`] : [
+                [`${INTERNAL_PORT[runTimeType]}/tcp`] : [
                     { HostPort: hostPort?.toString() }
                 ]
             },
@@ -21,9 +25,9 @@ export const deployContainer = async (imageName: string, hostPort: number, env?:
             }
         },
         ExposedPorts: {
-            [`${INTERNAL_PORT}/tcp`]: {}
+            [`${INTERNAL_PORT[runTimeType]}/tcp`]: {}
         },
-        Env: [...Object.entries({ PORT: INTERNAL_PORT, ...(env || {}) }).map(([key, value]) => `${key}=${value}`)]
+        Env: [...Object.entries({ PORT: INTERNAL_PORT[runTimeType], ...(env || {}) }).map(([key, value]) => `${key}=${value}`)]
     })
 
     await container.start();
@@ -111,32 +115,6 @@ export const getContainerLogs = async (containerId: string, options?: { lines?: 
     });
 
     return { container, stream: cleanDockerLogBuffer(streamBuffer) };
-}
-
-function cleanDockerLogBuffer(buffer: Buffer): string {
-  let i = 0;
-  let output = "";
-
-  while (i < buffer.length) {
-    // Docker log frame:
-    // byte 0: stream type
-    // bytes 1–3: unused
-    // bytes 4–7: message length (uint32 BE)
-    const messageLength = buffer.readUInt32BE(i + 4);
-
-    const messageStart = i + 8;
-    const messageEnd = messageStart + messageLength;
-
-    let currLine = buffer.slice(messageStart, messageEnd).toString("utf-8");
-
-    if (!currLine.includes("[Object: null prototype]")) {
-        output += currLine;
-    }
-
-    i = messageEnd;
-  }
-
-  return output;
 }
 
 export const listContainers = async () => {

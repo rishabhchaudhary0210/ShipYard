@@ -17,6 +17,8 @@ services:
       PORT: 8000
       SHIPYARD_WORKSPACE_ROOT: /shipyard-workspace
       SHIPYARD_WORKSPACE_HOST_ROOT: ${SHIPYARD_WORKSPACE_HOST_ROOT}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRY: ${JWT_EXPIRY}
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock
@@ -34,6 +36,8 @@ services:
       DOCKER_SOCKET_PATH: /var/run/docker.sock
       SHIPYARD_WORKSPACE_ROOT: /shipyard-workspace
       SHIPYARD_WORKSPACE_HOST_ROOT: ${SHIPYARD_WORKSPACE_HOST_ROOT}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRY: ${JWT_EXPIRY}
     volumes:
       - ./data:/data
       - /var/run/docker.sock:/var/run/docker.sock

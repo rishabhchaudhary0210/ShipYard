@@ -9,6 +9,8 @@ interface AppConfig {
     deploymentQueueMaxRetries?: number;
     shipyardWorkspaceRoot: string;
     shipyardWorkspaceHostRoot: string;
+    jwtSecret: string;
+    jwtExpiry: string;
 }
 
 const APP_CONFIG: AppConfig = {
@@ -24,6 +26,8 @@ const APP_CONFIG: AppConfig = {
         : 3,
     shipyardWorkspaceRoot: process.env.SHIPYARD_WORKSPACE_ROOT || '/shipyard-workspace',
     shipyardWorkspaceHostRoot: process.env.SHIPYARD_WORKSPACE_HOST_ROOT || '',
+    jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
+    jwtExpiry: process.env.JWT_EXPIRY || '3d',
 }
 
 export const getAppConfig = (key: keyof typeof APP_CONFIG): AppConfig[keyof AppConfig] => {

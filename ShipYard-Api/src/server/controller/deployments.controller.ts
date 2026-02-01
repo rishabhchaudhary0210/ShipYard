@@ -16,7 +16,10 @@ export const getDeploymentLogs = async (req: Request, res: Response) => {
 
     const deploymentDetails = await dbClient.deployment.findUnique({
         where: {
-            id: deploymentId
+            id: deploymentId,
+            project: {
+                ownerId: req.user?.id!
+            }
         }
     });
 
@@ -96,7 +99,10 @@ export const performDeploymentAction = async (req: Request, res: Response) => {
         where: {
             id: deploymentId,
             containerId: { not: null },
-            deletedAt: null
+            deletedAt: null,
+            project: {
+                ownerId: req.user?.id!
+            }
         }
     });
 

@@ -6,10 +6,13 @@ import {
     updateProject,
     deleteProject
 } from '../controller/projects.controller.js';
-import { validate } from '../middleware/validator.js';
+import { validate } from '../middleware/validator.middleware.js';
 import { createProjectSchema, deleteProjectSchema, getProjectByIdSchema, updateProjectSchema } from '../schema/projects.schema.js';
+import { authenticate } from '../middleware/auth.middleware.js';
 
 const projectsRouter = Router();
+
+projectsRouter.use(authenticate)
 
 projectsRouter.get('/', getAllProjects);
 projectsRouter.get('/:projectId', validate(getProjectByIdSchema), getProjectById);

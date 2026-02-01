@@ -7,13 +7,14 @@ import { removeContainer, removeImage } from '../../services/deployment/index.js
 import { getAppConfig } from '../../config/index.js';
 import { getImageTag } from '../../services/source-manager/index.js';
 
-export const getAllProjects = async (_req: Request, res: Response) => {
+export const getAllProjects = async (req: Request, res: Response) => {
     const projects = await dbClient.project.findMany({
         orderBy: {
             createdAt: 'desc'
         },
         where: {
-            deletedAt: null
+            deletedAt: null,
+            ownerId: req.user?.id!
         },
     });
 
@@ -26,7 +27,8 @@ export const getProjectById = async (req: Request, res: Response) => {
     const project = await dbClient.project.findUnique({
         where: {
             id: projectId,
-            deletedAt: null
+            deletedAt: null,
+            ownerId: req.user?.id!
         },
         include: {
             deployments: {
@@ -62,6 +64,7 @@ export const createProject = async (req: Request, res: Response) => {
                 name: name,
                 repoUrl: repoUrl,
                 rootDir: rootDir || '',
+                ownerId: req.user?.id!
             }
         })
 
@@ -115,7 +118,8 @@ export const updateProject = async (req: Request, res: Response) => {
         const projectDetails = await dbClient.project.findUnique({
             where: {
                 id: projectId,
-                deletedAt: null
+                deletedAt: null,
+                ownerId: req.user?.id!
             },
             include: {
                 deployments: true,
@@ -205,7 +209,8 @@ export const deleteProject = async (req: Request, res: Response) => {
     const projectDetails = await dbClient.project.findUnique({
         where: {
             id: projectId,
-            deletedAt: null
+            deletedAt: null,
+            ownerId: req.user?.id!
         },
         include: {
             deployments: true,
